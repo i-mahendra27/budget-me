@@ -20,13 +20,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocalMovies
-import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,36 +32,57 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.budgetsave.data.local.db.entity.CategoryEntity
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddCategoryScreen(
     categoryId: Long?,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: CategoriesViewModel = hiltViewModel()
 ) {
+    val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var selectedIcon by remember { mutableStateOf("restaurant") }
     var selectedColor by remember { mutableStateOf("#FF9800") }
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    val isEditing = categoryId != null
+
+    LaunchedEffect(categoryId) {
+        if (categoryId != null) {
+            val category = viewModel.getCategoryById(categoryId)
+            category?.let {
+                name = it.name
+                selectedIcon = it.icon
+                selectedColor = it.color
+            }
+        }
+    }
 
     val icons = listOf(
         "restaurant" to Icons.Default.Restaurant,
         "directions_car" to Icons.Default.DirectionsCar,
         "shopping_bag" to Icons.Default.ShoppingBag,
         "movie" to Icons.Default.LocalMovies,
-        "medical_services" to Icons.Default.MedicalServices,
         "school" to Icons.Default.School,
         "payments" to Icons.Default.Payments,
+        "fitness_center" to Icons.Default.MoreHoriz,
         "more_horiz" to Icons.Default.MoreHoriz
     )
 
@@ -75,10 +94,37 @@ fun AddCategoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (categoryId != null) "Edit Category" else "Add Category") },
+                title = { Text(if (isEditing) "Edit Category" else "Add Category") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            if (name.isBlank()) {
+                                nameError = "Name is required"
+                                return@TextButton
+                            }
+                            scope.launch {
+                                if (isEditing) {
+                                    viewModel.updateCategory(
+                                        CategoryEntity(
+                                            id = categoryId!!,
+                                            name = name,
+                                            icon = selectedIcon,
+                                            color = selectedColor
+                                        )
+                                    )
+                                } else {
+                                    viewModel.addCategory(name, selectedIcon, selectedColor)
+                                }
+                                onNavigateBack()
+                            }
+                        }
+                    ) {
+                        Text("Save")
                     }
                 }
             )
@@ -94,9 +140,14 @@ fun AddCategoryScreen(
         ) {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = {
+                    name = it
+                    nameError = null
+                },
                 label = { Text("Category Name") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = nameError != null,
+                supportingText = nameError?.let { { Text(it) } }
             )
 
             Text(
@@ -185,13 +236,6 @@ fun AddCategoryScreen(
                         }
                     }
                 }
-            }
-
-            Button(
-                onClick = { /* Save logic */ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save")
             }
         }
     }

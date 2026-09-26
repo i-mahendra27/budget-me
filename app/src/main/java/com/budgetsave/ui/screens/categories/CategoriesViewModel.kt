@@ -38,4 +38,28 @@ class CategoriesViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun getCategoryById(id: Long): CategoryEntity? {
+        return categoryRepository.getCategoryById(id)
+    }
+
+    fun addCategory(name: String, icon: String, color: String) {
+        viewModelScope.launch {
+            categoryRepository.insertCategory(
+                CategoryEntity(name = name, icon = icon, color = color)
+            )
+        }
+    }
+
+    fun updateCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            categoryRepository.updateCategory(category)
+        }
+    }
+
+    fun deleteCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            categoryRepository.deleteCategory(category)
+        }
+    }
 }
