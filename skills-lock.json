@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "android-clean-architecture": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/android-clean-architecture/SKILL.md",
+      "computedHash": "80779b595f194a1ca3d59e36cbf4b29f426faaf90cf9c41dfd61a80442214890"
+    },
+    "android-kotlin": {
+      "source": "alinaqi/maggy",
+      "sourceType": "github",
+      "skillPath": "skills/android-kotlin/SKILL.md",
+      "computedHash": "14a2b30a2cfd1e807f54d7de00c211a96db130a1cf0526a3449b5dce686b021a"
+    },
+    "ci-cd-and-automation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ci-cd-and-automation/SKILL.md",
+      "computedHash": "578b098a7d2352ccdac8b8abdc40eb6803538e81cf8382f138da6188a655087c"
+    },
+    "database-schema-designer": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "skillPath": "skills/database-schema-designer/SKILL.md",
+      "computedHash": "f23c909d45c6207e974dbce0db4c648de13d586abb37057cfec34d62f25bb526"
+    },
+    "engage-sdk-integration": {
+      "source": "android/skills",
+      "sourceType": "github",
+      "skillPath": "play/engage-sdk-integration/SKILL.md",
+      "computedHash": "c717ce44df0504ac9598caedb7a3242151821739909e858fb56591d22c4da0b6"
+    },
+    "java-junit": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/java-junit/SKILL.md",
+      "computedHash": "fbf3cb0d47ffb44bdb6e1ebcc4d89dd7083208efdfc5b88f316c8bc2b58250b5"
+    },
+    "kotlin-patterns": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/kotlin-patterns/SKILL.md",
+      "computedHash": "13278a2dcaa94b4173e9dcb7de73e4272e2ed8422580735b3c01a67a0a9b2ef6"
+    },
+    "kotlin-specialist": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kotlin-specialist/SKILL.md",
+      "computedHash": "1a96aa05f4242e0c6f57e2e315db8633aeecaddb4c8e9bf6c21aee0103d00aca"
+    },
+    "mvvm-toolkit-di": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/mvvm-toolkit-di/SKILL.md",
+      "computedHash": "03d4ba593107178559ac03bac176bf9dcb66bd3d9bb3cc865e69a4997308acbf"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "eb75bf6085080d7d31fa2c0f9fd98d49abd229356147999b09177b733276f806"
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "android": {
+    "clean_architecture": [
+      ".agents/skills/android-clean-architecture/SKILL.md"
+    ],
+    "kotlin": [
+      ".agents/skills/android-kotlin/SKILL.md"
+    ],
+    "mvvm": [
+      ".agents/skills/mvvm-toolkit-di/SKILL.md"
+    ]
+  },
+
+  "kotlin": {
+    "patterns": [
+      ".agents/skills/kotlin-patterns/SKILL.md"
+    ],
+    "specialist": [
+      ".agents/skills/kotlin-specialist/SKILL.md"
+    ]
+  },
+
+  "java": {
+    "testing": [
+      ".agents/skills/java-junit/SKILL.md"
+    ]
+  },
+
+  "database": {
+    "schema_design": [
+      ".agents/skills/database-schema-designer/SKILL.md"
+    ]
+  },
+
+  "integration": {
+    "engage_sdk": [
+      ".agents/skills/engage-sdk-integration/SKILL.md"
+    ]
+  },
+
+  "devops": {
+    "ci_cd": [
+      ".agents/skills/ci-cd-and-automation/SKILL.md"
+    ]
+  },
+
+  "frontend": {
+    "design": [
+      ".agents/skills/ui-ux-pro-max/SKILL.md"
+    ]
+  }
+}
