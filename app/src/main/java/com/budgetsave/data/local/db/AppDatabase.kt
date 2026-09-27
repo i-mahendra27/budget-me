@@ -54,6 +54,7 @@ class DatabaseCallback(
         // Only seed if no categories exist
         if (categoryDao.getCategoryCount() == 0) {
             val defaultCategories = listOf(
+                // Existing
                 CategoryEntity(name = "Food & Drinks", icon = "restaurant", color = "#FF9800"),
                 CategoryEntity(name = "Transportation", icon = "directions_car", color = "#2196F3"),
                 CategoryEntity(name = "Shopping", icon = "shopping_bag", color = "#E91E63"),
@@ -61,7 +62,22 @@ class DatabaseCallback(
                 CategoryEntity(name = "Health", icon = "medical_services", color = "#F44336"),
                 CategoryEntity(name = "Education", icon = "school", color = "#3F51B5"),
                 CategoryEntity(name = "Salary", icon = "payments", color = "#4CAF50"),
-                CategoryEntity(name = "Others", icon = "more_horiz", color = "#607D8B")
+                CategoryEntity(name = "Others", icon = "more_horiz", color = "#607D8B"),
+                // New
+                CategoryEntity(name = "Subscription", icon = "subscriptions", color = "#00BCD4"),
+                CategoryEntity(name = "Baby", icon = "child_care", color = "#FFEB3B"),
+                CategoryEntity(name = "Beauty", icon = "face", color = "#E91E63"),
+                CategoryEntity(name = "Balancing", icon = "account_balance", color = "#795548"),
+                CategoryEntity(name = "Bills", icon = "receipt_long", color = "#9C27B0"),
+                CategoryEntity(name = "Car", icon = "directions_car", color = "#3F51B5"),
+                CategoryEntity(name = "Clothing", icon = "checkroom", color = "#FF5722"),
+                CategoryEntity(name = "Electronics", icon = "devices", color = "#607D8B"),
+                CategoryEntity(name = "Insurance", icon = "security", color = "#00BCD4"),
+                CategoryEntity(name = "Home", icon = "home", color = "#8BC34A"),
+                CategoryEntity(name = "Laundry", icon = "local_laundry_service", color = "#03A9F4"),
+                CategoryEntity(name = "Parking", icon = "local_parking", color = "#FF9800"),
+                CategoryEntity(name = "Sport", icon = "sports_soccer", color = "#4CAF50"),
+                CategoryEntity(name = "Tax", icon = "account_balance_wallet", color = "#9E9E9E")
             )
             categoryDao.insertCategories(defaultCategories)
         }

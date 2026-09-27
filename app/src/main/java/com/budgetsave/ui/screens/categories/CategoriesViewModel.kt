@@ -8,12 +8,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class CategoriesUiState(
     val categories: List<CategoryEntity> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val categoryToDelete: CategoryEntity? = null,
+    val hasTransactions: Boolean = false
 )
 
 @HiltViewModel
@@ -60,6 +63,18 @@ class CategoriesViewModel @Inject constructor(
     fun deleteCategory(category: CategoryEntity) {
         viewModelScope.launch {
             categoryRepository.deleteCategory(category)
+            _uiState.update { it.copy(categoryToDelete = null, hasTransactions = false) }
         }
+    }
+
+    fun showDeleteConfirmation(category: CategoryEntity) {
+        viewModelScope.launch {
+            val hasTx = categoryRepository.hasTransactions(category.id)
+            _uiState.update { it.copy(categoryToDelete = category, hasTransactions = hasTx) }
+        }
+    }
+
+    fun dismissDeleteConfirmation() {
+        _uiState.update { it.copy(categoryToDelete = null, hasTransactions = false) }
     }
 }
