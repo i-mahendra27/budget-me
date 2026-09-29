@@ -16,31 +16,65 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AddBudgetUiState(
+    val budgetId: Long? = null,
     val selectedCategory: CategoryEntity? = null,
     val categories: List<CategoryEntity> = emptyList(),
     val amount: String = "",
     val categoryError: String? = null,
     val amountError: String? = null,
+    val existingBudgetCategoryIds: Set<Long> = emptySet(),
     val isLoading: Boolean = false
 )
 
 @HiltViewModel
 class AddBudgetViewModel @Inject constructor(
     private val budgetRepository: BudgetRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val budgetId: Long? = null
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AddBudgetUiState())
+    private val _uiState = MutableStateFlow(AddBudgetUiState(budgetId = budgetId))
     val uiState: StateFlow<AddBudgetUiState> = _uiState.asStateFlow()
 
     init {
-        loadCategories()
+        loadData()
+        if (budgetId != null) {
+            loadBudget(budgetId)
+        }
     }
 
-    private fun loadCategories() {
+    private fun loadData() {
+        viewModelScope.launch {
+            val (year, month) = DateUtils.getCurrentMonthYear()
+            budgetRepository.getBudgetsByMonthYear(month, year).collect { existingBudgets ->
+                val existingCategoryIds = existingBudgets.map { it.categoryId }.toSet()
+                _uiState.update { it.copy(existingBudgetCategoryIds = existingCategoryIds) }
+            }
+        }
         viewModelScope.launch {
             categoryRepository.getAllCategories().collect { categories ->
-                _uiState.update { it.copy(categories = categories) }
+                val existingIds = _uiState.value.existingBudgetCategoryIds
+                val filteredCategories = if (budgetId != null) {
+                    categories
+                } else {
+                    categories.filter { it.id !in existingIds }
+                }
+                _uiState.update { it.copy(categories = filteredCategories) }
+            }
+        }
+    }
+
+    private fun loadBudget(id: Long) {
+        viewModelScope.launch {
+            budgetRepository.getBudgetById(id)?.let { budget ->
+                categoryRepository.getCategoryById(budget.categoryId)?.let { category ->
+                    _uiState.update {
+                        it.copy(
+                            selectedCategory = category,
+                            amount = budget.amount.toLong().toString()
+                        )
+                    }
+                }
             }
         }
     }
@@ -79,13 +113,17 @@ class AddBudgetViewModel @Inject constructor(
 
         viewModelScope.launch {
             val budget = BudgetEntity(
-                id = 0,
+                id = state.budgetId ?: 0,
                 categoryId = category.id,
                 amount = amount,
                 month = month,
                 year = year
             )
-            budgetRepository.insertBudget(budget)
+            if (state.budgetId != null) {
+                budgetRepository.updateBudget(budget)
+            } else {
+                budgetRepository.insertBudget(budget)
+            }
         }
     }
 }
