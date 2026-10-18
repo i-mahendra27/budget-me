@@ -86,3 +86,4 @@ lint/tmp/
 
 /.agents
 /specs
+/skills-lock.json

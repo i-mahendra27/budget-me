@@ -1,6 +1,5 @@
 package com.budgetsave.ui.screens.saving
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,13 +36,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.budgetsave.ui.components.CircularProgressRing
+import com.budgetsave.ui.components.RingSize
 import com.budgetsave.util.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,8 +100,9 @@ fun SavingGoalDetailScreen(
                 modifier = Modifier.size(200.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressRingLarge(
+                CircularProgressRing(
                     progress = progress,
+                    size = RingSize.Large,
                     modifier = Modifier.fillMaxSize()
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -259,36 +258,6 @@ fun SavingGoalDetailScreen(
                     Text("Cancel")
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun CircularProgressRingLarge(
-    progress: Float,
-    modifier: Modifier = Modifier
-) {
-    val strokeWidth = 12f
-    Canvas(modifier = modifier) {
-        val sweepAngle = progress * 360f
-        val stroke = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-
-        // Background circle
-        drawArc(
-            color = Color.LightGray,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            style = stroke
-        )
-
-        // Progress arc
-        drawArc(
-            color = Color(0xFF2E7D32),
-            startAngle = -90f,
-            sweepAngle = sweepAngle,
-            useCenter = false,
-            style = stroke
         )
     }
 }

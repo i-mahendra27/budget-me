@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.LocalMovies
 import androidx.compose.material.icons.filled.LocalParking
+import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Receipt
@@ -50,6 +51,7 @@ val categoryIcons = listOf(
     IconItem("directions_car", Icons.Default.DirectionsCar),
     IconItem("shopping_bag", Icons.Default.ShoppingBag),
     IconItem("movie", Icons.Default.LocalMovies),
+    IconItem("medical_services", Icons.Default.MedicalServices),
     IconItem("school", Icons.Default.School),
     IconItem("payments", Icons.Default.Payments),
     IconItem("home", Icons.Default.Home),

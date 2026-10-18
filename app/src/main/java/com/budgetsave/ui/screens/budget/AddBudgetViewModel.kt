@@ -1,5 +1,6 @@
 package com.budgetsave.ui.screens.budget
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.budgetsave.data.local.db.entity.BudgetEntity
@@ -30,8 +31,10 @@ data class AddBudgetUiState(
 class AddBudgetViewModel @Inject constructor(
     private val budgetRepository: BudgetRepository,
     private val categoryRepository: CategoryRepository,
-    private val budgetId: Long? = null
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val budgetId: Long? = savedStateHandle.get<Long>("budgetId")
 
     private val _uiState = MutableStateFlow(AddBudgetUiState(budgetId = budgetId))
     val uiState: StateFlow<AddBudgetUiState> = _uiState.asStateFlow()
