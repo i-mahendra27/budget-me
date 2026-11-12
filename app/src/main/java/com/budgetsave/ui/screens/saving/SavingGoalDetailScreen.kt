@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.budgetsave.ui.components.CircularProgressRing
 import com.budgetsave.ui.components.RingSize
+import com.budgetsave.ui.screens.categories.getCategoryIcon
 import com.budgetsave.util.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,10 +58,21 @@ fun SavingGoalDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showAddSavingsDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showWithdrawDialog by remember { mutableStateOf(false) }
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     val goal = uiState.goal
     if (goal == null) {
-        onNavigateBack()
+        LaunchedEffect(Unit) { onNavigateBack() }
         return
     }
 
@@ -106,6 +120,13 @@ fun SavingGoalDetailScreen(
                     modifier = Modifier.fillMaxSize()
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = getCategoryIcon(goal.icon),
+                        contentDescription = goal.name,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "${(progress * 100).toInt()}%",
                         style = MaterialTheme.typography.displaySmall,
@@ -198,6 +219,16 @@ fun SavingGoalDetailScreen(
                 }
             }
 
+            if (goal.currentAmount > 0.0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showWithdrawDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Withdraw")
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -231,6 +262,53 @@ fun SavingGoalDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showAddSavingsDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showWithdrawDialog) {
+        var withdrawAmount by remember { mutableStateOf("") }
+        var withdrawError by remember { mutableStateOf<String?>(null) }
+        AlertDialog(
+            onDismissRequest = { showWithdrawDialog = false },
+            title = { Text("Withdraw") },
+            text = {
+                OutlinedTextField(
+                    value = withdrawAmount,
+                    onValueChange = {
+                        withdrawAmount = it
+                        withdrawError = null
+                    },
+                    label = { Text("Amount") },
+                    prefix = { Text("Rp ") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = withdrawError != null,
+                    supportingText = withdrawError?.let { { Text(it) } }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val amountValue = withdrawAmount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull()
+                        when {
+                            amountValue == null || amountValue <= 0 ->
+                                withdrawError = "Please enter a valid amount"
+                            amountValue > goal.currentAmount ->
+                                withdrawError = "Amount exceeds your current savings"
+                            else -> {
+                                viewModel.withdrawFromSavings(amountValue)
+                                showWithdrawDialog = false
+                            }
+                        }
+                    }
+                ) {
+                    Text("Withdraw")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWithdrawDialog = false }) {
                     Text("Cancel")
                 }
             }

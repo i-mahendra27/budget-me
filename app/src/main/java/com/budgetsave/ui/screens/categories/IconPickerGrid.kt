@@ -118,3 +118,9 @@ fun IconPickerGrid(
         }
     }
 }
+
+/**
+ * Resolve a stored icon name to its vector. Falls back to MoreHoriz for unknown names.
+ */
+fun getCategoryIcon(name: String): ImageVector =
+    categoryIcons.firstOrNull { it.name == name }?.icon ?: Icons.Default.MoreHoriz

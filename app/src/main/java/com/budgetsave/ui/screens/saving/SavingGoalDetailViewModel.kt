@@ -54,6 +54,21 @@ class SavingGoalDetailViewModel @Inject constructor(
         }
     }
 
+    fun withdrawFromSavings(amount: Double) {
+        viewModelScope.launch {
+            val goal = _uiState.value.goal ?: return@launch
+            if (amount <= 0 || amount > goal.currentAmount) return@launch
+
+            val newAmount = goal.currentAmount - amount
+            val updatedGoal = goal.copy(
+                currentAmount = newAmount,
+                isCompleted = newAmount >= goal.targetAmount
+            )
+            savingGoalRepository.updateSavingGoal(updatedGoal)
+            _uiState.value = _uiState.value.copy(goal = updatedGoal)
+        }
+    }
+
     fun deleteGoal() {
         viewModelScope.launch {
             val goal = _uiState.value.goal ?: return@launch

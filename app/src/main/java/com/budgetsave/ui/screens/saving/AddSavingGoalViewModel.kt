@@ -1,5 +1,6 @@
 package com.budgetsave.ui.screens.saving
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.budgetsave.data.local.db.entity.SavingGoalEntity
@@ -12,20 +13,49 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+const val DEFAULT_GOAL_ICON = "flight"
+
 data class AddSavingGoalUiState(
     val name: String = "",
     val targetAmount: String = "",
+    val icon: String = DEFAULT_GOAL_ICON,
     val nameError: String? = null,
-    val amountError: String? = null
+    val amountError: String? = null,
+    val existingGoal: SavingGoalEntity? = null
 )
 
 @HiltViewModel
 class AddSavingGoalViewModel @Inject constructor(
-    private val savingGoalRepository: SavingGoalRepository
+    private val savingGoalRepository: SavingGoalRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val goalId: Long? = savedStateHandle.get<Long>("goalId")
 
     private val _uiState = MutableStateFlow(AddSavingGoalUiState())
     val uiState: StateFlow<AddSavingGoalUiState> = _uiState.asStateFlow()
+
+    init {
+        goalId?.let { loadGoal(it) }
+    }
+
+    private fun loadGoal(id: Long) {
+        viewModelScope.launch {
+            savingGoalRepository.getSavingGoalById(id)?.let { goal ->
+                _uiState.update {
+                    it.copy(
+                        name = goal.name,
+                        targetAmount = formatAmount(goal.targetAmount),
+                        icon = goal.icon,
+                        existingGoal = goal
+                    )
+                }
+            }
+        }
+    }
+
+    private fun formatAmount(value: Double): String =
+        if (value % 1.0 == 0.0) value.toLong().toString() else value.toString()
 
     fun updateName(name: String) {
         _uiState.update { it.copy(name = name, nameError = null) }
@@ -33,6 +63,10 @@ class AddSavingGoalViewModel @Inject constructor(
 
     fun updateTargetAmount(amount: String) {
         _uiState.update { it.copy(targetAmount = amount, amountError = null) }
+    }
+
+    fun updateIcon(icon: String) {
+        _uiState.update { it.copy(icon = icon) }
     }
 
     fun validate(): Boolean {
@@ -53,18 +87,22 @@ class AddSavingGoalViewModel @Inject constructor(
         return isValid
     }
 
-    fun saveGoal() {
+    suspend fun saveGoal() {
         val state = _uiState.value
         val amount = state.targetAmount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull() ?: return
 
-        viewModelScope.launch {
-            val goal = SavingGoalEntity(
-                id = 0,
-                name = state.name,
-                targetAmount = amount,
-                currentAmount = 0.0,
-                icon = "savings"
-            )
+        val existing = state.existingGoal
+        val goal = SavingGoalEntity(
+            id = existing?.id ?: 0,
+            name = state.name,
+            targetAmount = amount,
+            currentAmount = existing?.currentAmount ?: 0.0,
+            icon = state.icon,
+            isCompleted = existing?.isCompleted ?: false
+        )
+        if (existing != null) {
+            savingGoalRepository.updateSavingGoal(goal)
+        } else {
             savingGoalRepository.insertSavingGoal(goal)
         }
     }
