@@ -18,6 +18,9 @@ class SavingGoalRepository @Inject constructor(
 
     suspend fun getSavingGoalById(id: Long): SavingGoalEntity? = savingGoalDao.getSavingGoalById(id)
 
+    fun observeSavingGoalById(id: Long): Flow<SavingGoalEntity?> =
+        savingGoalDao.observeSavingGoalById(id)
+
     suspend fun insertSavingGoal(savingGoal: SavingGoalEntity): Long =
         savingGoalDao.insertSavingGoal(savingGoal)
 

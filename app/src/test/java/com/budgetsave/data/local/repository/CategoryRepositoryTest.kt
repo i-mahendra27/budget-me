@@ -1,6 +1,7 @@
 package com.budgetsave.data.local.repository
 
 import com.budgetsave.data.local.db.dao.CategoryDao
+import com.budgetsave.data.local.db.dao.TransactionDao
 import com.budgetsave.data.local.db.entity.CategoryEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -15,13 +16,14 @@ import org.mockito.kotlin.whenever
 class CategoryRepositoryTest {
 
     @Mock private lateinit var categoryDao: CategoryDao
+    @Mock private lateinit var transactionDao: TransactionDao
 
     private lateinit var repository: CategoryRepository
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        repository = CategoryRepository(categoryDao)
+        repository = CategoryRepository(categoryDao, transactionDao)
     }
 
     @Test

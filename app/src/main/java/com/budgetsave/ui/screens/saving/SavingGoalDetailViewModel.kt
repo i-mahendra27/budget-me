@@ -29,35 +29,29 @@ class SavingGoalDetailViewModel @Inject constructor(
     val uiState: StateFlow<SavingGoalDetailUiState> = _uiState.asStateFlow()
 
     init {
-        loadGoal()
+        observeGoal()
     }
 
-    private fun loadGoal() {
+    private fun observeGoal() {
         viewModelScope.launch {
-            val goal = savingGoalRepository.getSavingGoalById(goalId)
-            _uiState.value = SavingGoalDetailUiState(goal = goal, isLoading = false)
+            savingGoalRepository.observeSavingGoalById(goalId).collect { goal ->
+                _uiState.value = SavingGoalDetailUiState(goal = goal, isLoading = false)
+            }
         }
     }
 
-    fun addToSavings(amount: Double) {
+    fun withdrawFromSavings(amount: Double) {
         viewModelScope.launch {
             val goal = _uiState.value.goal ?: return@launch
-            val newAmount = goal.currentAmount + amount
-            val isCompleted = newAmount >= goal.targetAmount
+            if (amount <= 0 || amount > goal.currentAmount) return@launch
 
-            val updatedGoal = goal.copy(
-                currentAmount = newAmount,
-                isCompleted = isCompleted
+            val newAmount = goal.currentAmount - amount
+            savingGoalRepository.updateSavingGoal(
+                goal.copy(
+                    currentAmount = newAmount,
+                    isCompleted = newAmount >= goal.targetAmount
+                )
             )
-            savingGoalRepository.updateSavingGoal(updatedGoal)
-            _uiState.value = _uiState.value.copy(goal = updatedGoal)
-        }
-    }
-
-    fun deleteGoal() {
-        viewModelScope.launch {
-            val goal = _uiState.value.goal ?: return@launch
-            savingGoalRepository.deleteSavingGoal(goal)
         }
     }
 }

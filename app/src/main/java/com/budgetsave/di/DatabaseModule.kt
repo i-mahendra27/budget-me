@@ -32,6 +32,7 @@ object DatabaseModule {
             AppDatabase.DATABASE_NAME
         )
             .addCallback(DatabaseCallback(categoryDaoProvider))
+            .fallbackToDestructiveMigration()
             .build()
     }
 

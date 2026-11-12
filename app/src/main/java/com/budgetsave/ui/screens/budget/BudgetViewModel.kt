@@ -103,4 +103,10 @@ class BudgetViewModel @Inject constructor(
         }
         loadBudgets()
     }
+
+    fun deleteBudget(budget: BudgetEntity) {
+        viewModelScope.launch {
+            budgetRepository.deleteBudget(budget)
+        }
+    }
 }

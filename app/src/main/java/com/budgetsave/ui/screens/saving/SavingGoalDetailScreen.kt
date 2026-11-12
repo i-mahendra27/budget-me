@@ -1,6 +1,5 @@
 package com.budgetsave.ui.screens.saving
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,21 +30,26 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.budgetsave.ui.components.CircularProgressRing
+import com.budgetsave.ui.components.RingSize
+import com.budgetsave.ui.screens.categories.getCategoryIcon
 import com.budgetsave.util.CurrencyUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,15 +57,38 @@ fun SavingGoalDetailScreen(
     goalId: Long,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: () -> Unit,
-    viewModel: SavingGoalDetailViewModel = hiltViewModel()
+    viewModel: SavingGoalDetailViewModel = hiltViewModel(),
+    savingGoalViewModel: SavingGoalViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
     var showAddSavingsDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showWithdrawDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        savingGoalViewModel.events.collect { event ->
+            when (event) {
+                SavingGoalEvent.GoalCompleted ->
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+    }
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     val goal = uiState.goal
     if (goal == null) {
-        onNavigateBack()
+        LaunchedEffect(Unit) { onNavigateBack() }
         return
     }
 
@@ -102,11 +130,19 @@ fun SavingGoalDetailScreen(
                 modifier = Modifier.size(200.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressRingLarge(
+                CircularProgressRing(
                     progress = progress,
+                    size = RingSize.Large,
                     modifier = Modifier.fillMaxSize()
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = getCategoryIcon(goal.icon),
+                        contentDescription = goal.name,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "${(progress * 100).toInt()}%",
                         style = MaterialTheme.typography.displaySmall,
@@ -199,39 +235,73 @@ fun SavingGoalDetailScreen(
                 }
             }
 
+            if (goal.currentAmount > 0.0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showWithdrawDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Withdraw")
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 
     if (showAddSavingsDialog) {
-        var amount by remember { mutableStateOf("") }
+        AddSavingsDialog(
+            onDismiss = { showAddSavingsDialog = false },
+            onConfirm = { amount ->
+                scope.launch {
+                    savingGoalViewModel.addToSavings(goal, amount)
+                }
+                showAddSavingsDialog = false
+            }
+        )
+    }
+
+    if (showWithdrawDialog) {
+        var withdrawAmount by remember { mutableStateOf("") }
+        var withdrawError by remember { mutableStateOf<String?>(null) }
         AlertDialog(
-            onDismissRequest = { showAddSavingsDialog = false },
-            title = { Text("Add to Savings") },
+            onDismissRequest = { showWithdrawDialog = false },
+            title = { Text("Withdraw") },
             text = {
                 OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
+                    value = withdrawAmount,
+                    onValueChange = {
+                        withdrawAmount = it
+                        withdrawError = null
+                    },
                     label = { Text("Amount") },
                     prefix = { Text("Rp ") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = withdrawError != null,
+                    supportingText = withdrawError?.let { { Text(it) } }
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val amountValue = amount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull()
-                        if (amountValue != null && amountValue > 0) {
-                            viewModel.addToSavings(amountValue)
+                        val amountValue = withdrawAmount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull()
+                        when {
+                            amountValue == null || amountValue <= 0 ->
+                                withdrawError = "Please enter a valid amount"
+                            amountValue > goal.currentAmount ->
+                                withdrawError = "Amount exceeds your current savings"
+                            else -> {
+                                viewModel.withdrawFromSavings(amountValue)
+                                showWithdrawDialog = false
+                            }
                         }
-                        showAddSavingsDialog = false
                     }
                 ) {
-                    Text("Add")
+                    Text("Withdraw")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddSavingsDialog = false }) {
+                TextButton(onClick = { showWithdrawDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -246,7 +316,9 @@ fun SavingGoalDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteGoal()
+                        scope.launch {
+                            savingGoalViewModel.deleteSavingGoal(goal)
+                        }
                         showDeleteDialog = false
                         onNavigateBack()
                     }
@@ -259,36 +331,6 @@ fun SavingGoalDetailScreen(
                     Text("Cancel")
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun CircularProgressRingLarge(
-    progress: Float,
-    modifier: Modifier = Modifier
-) {
-    val strokeWidth = 12f
-    Canvas(modifier = modifier) {
-        val sweepAngle = progress * 360f
-        val stroke = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-
-        // Background circle
-        drawArc(
-            color = Color.LightGray,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            style = stroke
-        )
-
-        // Progress arc
-        drawArc(
-            color = Color(0xFF2E7D32),
-            startAngle = -90f,
-            sweepAngle = sweepAngle,
-            useCenter = false,
-            style = stroke
         )
     }
 }
