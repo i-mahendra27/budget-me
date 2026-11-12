@@ -87,23 +87,21 @@ class AddSavingGoalViewModel @Inject constructor(
         return isValid
     }
 
-    suspend fun saveGoal() {
+    /**
+     * Builds the goal entity from the current form state, or null when the amount is invalid.
+     */
+    fun buildGoal(): SavingGoalEntity? {
         val state = _uiState.value
-        val amount = state.targetAmount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull() ?: return
+        val amount = state.targetAmount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull() ?: return null
 
         val existing = state.existingGoal
-        val goal = SavingGoalEntity(
+        return SavingGoalEntity(
             id = existing?.id ?: 0,
-            name = state.name,
+            name = state.name.trim(),
             targetAmount = amount,
             currentAmount = existing?.currentAmount ?: 0.0,
             icon = state.icon,
             isCompleted = existing?.isCompleted ?: false
         )
-        if (existing != null) {
-            savingGoalRepository.updateSavingGoal(goal)
-        } else {
-            savingGoalRepository.insertSavingGoal(goal)
-        }
     }
 }

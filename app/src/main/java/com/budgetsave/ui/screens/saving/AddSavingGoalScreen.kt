@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
 fun AddSavingGoalScreen(
     goalId: Long?,
     onNavigateBack: () -> Unit,
-    viewModel: AddSavingGoalViewModel = hiltViewModel()
+    viewModel: AddSavingGoalViewModel = hiltViewModel(),
+    savingGoalViewModel: SavingGoalViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -96,7 +97,12 @@ fun AddSavingGoalScreen(
                 onClick = {
                     if (viewModel.validate()) {
                         scope.launch {
-                            viewModel.saveGoal()
+                            val goal = viewModel.buildGoal() ?: return@launch
+                            if (uiState.existingGoal != null) {
+                                savingGoalViewModel.updateSavingGoal(goal)
+                            } else {
+                                savingGoalViewModel.addSavingGoal(goal)
+                            }
                             onNavigateBack()
                         }
                     }

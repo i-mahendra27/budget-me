@@ -35,9 +35,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -46,6 +49,7 @@ import com.budgetsave.ui.components.CircularProgressRing
 import com.budgetsave.ui.components.RingSize
 import com.budgetsave.ui.screens.categories.getCategoryIcon
 import com.budgetsave.util.CurrencyUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,12 +57,24 @@ fun SavingGoalDetailScreen(
     goalId: Long,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: () -> Unit,
-    viewModel: SavingGoalDetailViewModel = hiltViewModel()
+    viewModel: SavingGoalDetailViewModel = hiltViewModel(),
+    savingGoalViewModel: SavingGoalViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
     var showAddSavingsDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showWithdrawDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        savingGoalViewModel.events.collect { event ->
+            when (event) {
+                SavingGoalEvent.GoalCompleted ->
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+    }
 
     if (uiState.isLoading) {
         Box(
@@ -234,36 +250,13 @@ fun SavingGoalDetailScreen(
     }
 
     if (showAddSavingsDialog) {
-        var amount by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showAddSavingsDialog = false },
-            title = { Text("Add to Savings") },
-            text = {
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount") },
-                    prefix = { Text("Rp ") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val amountValue = amount.replace("[^\\d.]".toRegex(), "").toDoubleOrNull()
-                        if (amountValue != null && amountValue > 0) {
-                            viewModel.addToSavings(amountValue)
-                        }
-                        showAddSavingsDialog = false
-                    }
-                ) {
-                    Text("Add")
+        AddSavingsDialog(
+            onDismiss = { showAddSavingsDialog = false },
+            onConfirm = { amount ->
+                scope.launch {
+                    savingGoalViewModel.addToSavings(goal, amount)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddSavingsDialog = false }) {
-                    Text("Cancel")
-                }
+                showAddSavingsDialog = false
             }
         )
     }
@@ -323,7 +316,9 @@ fun SavingGoalDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteGoal()
+                        scope.launch {
+                            savingGoalViewModel.deleteSavingGoal(goal)
+                        }
                         showDeleteDialog = false
                         onNavigateBack()
                     }

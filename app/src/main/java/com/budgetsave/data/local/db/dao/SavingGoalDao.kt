@@ -23,6 +23,9 @@ interface SavingGoalDao {
     @Query("SELECT * FROM saving_goals WHERE id = :id")
     suspend fun getSavingGoalById(id: Long): SavingGoalEntity?
 
+    @Query("SELECT * FROM saving_goals WHERE id = :id")
+    fun observeSavingGoalById(id: Long): Flow<SavingGoalEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSavingGoal(savingGoal: SavingGoalEntity): Long
 
